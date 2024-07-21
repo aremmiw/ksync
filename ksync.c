@@ -154,7 +154,12 @@ static void kusers(struct kreq *req)
 
 			switch (login_code) {
 			case NO_USER_EXISTS:
-				if (create_user(un, pw) == 0)
+				if (!REGISTRATIONS_ALLOWED)
+				{
+					respcode(req, KHTTP_402);
+					json_message = get_json_message("message", "Registrations disabled");
+				}
+				else if (create_user(un, pw) == 0)
 				{
 					respcode(req, KHTTP_201);
 					json_message = get_json_message("username", un);
