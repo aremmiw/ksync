@@ -40,7 +40,7 @@ static const disp disps[PAGE__MAX] =
 	kindex,		/* PAGE_INDEX */
 	kusers,		/* PAGE_USERS */
 	ksyncs,		/* PAGE_SYNCS */
-	khealthcheck	/* PAGE_HEALTHCHECK */
+	khealthcheck,	/* PAGE_HEALTHCHECK */
 };
 
 const char *const pages[PAGE__MAX] =
@@ -48,7 +48,7 @@ const char *const pages[PAGE__MAX] =
 	"index",
 	"users",
 	"syncs",
-	"healthcheck"
+	"healthcheck",
 };
 
 
