@@ -388,8 +388,9 @@ int init_sqlitedb(char *dbpath)
 		return 1;
 	}
 
-	const char *init_db = "CREATE TABLE IF NOT EXISTS users(username TEXT, password TEXT, UNIQUE(username)); "
-			      "CREATE TABLE IF NOT EXISTS progress(username TEXT, document TEXT, progress TEXT, percentage REAL, device TEXT, device_id TEXT, timestamp DATETIME, UNIQUE(username, document)); ";
+	const char *init_db = "CREATE TABLE IF NOT EXISTS users(username TEXT COLLATE NOCASE, password TEXT, UNIQUE(username)); "
+			      "CREATE TABLE IF NOT EXISTS progress(username TEXT COLLATE NOCASE, document TEXT, progress TEXT, "
+			      "percentage REAL, device TEXT, device_id TEXT, timestamp DATETIME, UNIQUE(username, document));";
 	char *errmsg = NULL;
 
 	if (sqlite3_exec(db, init_db, 0, 0, &errmsg) != SQLITE_OK)
@@ -470,7 +471,7 @@ int check_user(char *username, char *password)
 }
 
 int update_document(char *username, Doc d)
-{	// TODO: modify SQL DB to handle usernames case-insensitively
+{
 	char *zsql = "INSERT INTO progress (username, document, progress, percentage, device, device_id, timestamp) "
 		     "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7) "
 		     "ON CONFLICT (username, document) "
