@@ -18,6 +18,7 @@ static void respcode(struct kreq *req, enum khttp http);
 static void kindex(struct kreq *req);
 static void kusers(struct kreq *req);
 static void ksyncs(struct kreq *req);
+static void khealthcheck(struct kreq *req);
 static void get_auth_headers(char **un, char **pw, struct khead *k, int reqsz);
 static char *get_json_message(char *key, char *value);
 
@@ -30,14 +31,16 @@ enum pages
 	PAGE_INDEX,
 	PAGE_USERS,
 	PAGE_SYNCS,
+	PAGE_HEALTHCHECK,
 	PAGE__MAX,
 };
 
 static const disp disps[PAGE__MAX] =
 {
-	kindex, /* PAGE_INDEX */
-	kusers, /* PAGE_USERS */
-	ksyncs, /* PAGE_SYNCS */
+	kindex,		/* PAGE_INDEX */
+	kusers,		/* PAGE_USERS */
+	ksyncs,		/* PAGE_SYNCS */
+	khealthcheck	/* PAGE_HEALTHCHECK */
 };
 
 const char *const pages[PAGE__MAX] =
@@ -45,6 +48,7 @@ const char *const pages[PAGE__MAX] =
 	"index",
 	"users",
 	"syncs",
+	"healthcheck"
 };
 
 
@@ -137,7 +141,9 @@ static void kusers(struct kreq *req)
 		if (userpass_json == NULL)
 		{
 			respcode(req, KHTTP_400);
-			khttp_puts(req, "Bad request");
+			json_message = get_json_message("message", "Bad request");
+			khttp_puts(req, json_message);
+			free(json_message);
 			cJSON_Delete(userpass_json);
 			return;
 		}
@@ -340,6 +346,12 @@ static void ksyncs(struct kreq *req)
 	login_end:
 		khttp_puts(req, json_message);
 		free(json_message);
+}
+
+static void khealthcheck(struct kreq *req)
+{
+	respcode(req, KHTTP_200);
+	khttp_puts(req, "{\"state\":\"OK\"}");
 }
 
 static void get_auth_headers(char **un, char **pw, struct khead *k, int reqsz)
