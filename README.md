@@ -1,6 +1,8 @@
 # ksync
 
-FastCGI KOReader sync server written in C with kcgi and SQLite.
+ksync is a FastCGI [KOReader](https://github.com/koreader/koreader) sync server implementation written in C with kcgi and SQLite.
+
+It's an alternative to [koreader-sync-server](https://github.com/koreader/koreader-sync-server) and is used for syncing reading progress between KOReader devices.
 
 ## dependencies
 * [kcgi](https://github.com/kristapsdz/kcgi)
