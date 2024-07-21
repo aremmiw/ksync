@@ -1,6 +1,8 @@
 #define _XOPEN_SOURCE 700
 #define _POSIX_C_SOURCE 200809L
 
+#include "config.h"
+
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -15,11 +17,6 @@
 #include <cjson/cJSON.h>
 #include <kcgi.h>
 #include <sqlite3.h>
-
-/* Path for SQLite DB */
-#define DB_PATH "/var/www/data/ksync.sqlite"
-/* Usernames/passwords must be less than this amount (and accounting for \0) */
-#define MAX_USERPASS_LEN 128+1
 
 typedef struct Doc
 {
