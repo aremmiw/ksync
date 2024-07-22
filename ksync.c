@@ -206,7 +206,6 @@ static void kusers(struct kreq *req)
 
 static void ksyncs(struct kreq *req)
 {
-	char *json_message = NULL;
 	char *un = NULL;
 	char *pw = NULL;
 
@@ -282,7 +281,7 @@ static void ksyncs(struct kreq *req)
 			 && cJSON_AddNumberToObject(update_out, "timestamp", d.timestamp) != NULL)
 			{
 				respcode(req, KHTTP_200);
-				json_message = cJSON_PrintUnformatted(update_out);
+				char *json_message = cJSON_PrintUnformatted(update_out);
 				khttp_puts(req, json_message);
 				free(json_message);
 			}
