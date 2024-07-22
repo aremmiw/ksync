@@ -33,7 +33,7 @@ int init_sqlitedb(char *dbpath)
 		sqlite3_close(db);
 		return 1;
 	}
-	chmod(dbpath, S_IRUSR | S_IWUSR);
+	chmod(dbpath, DB_PERMS);
 
 	return 0;
 }
