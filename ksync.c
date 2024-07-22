@@ -21,6 +21,7 @@ static void ksyncs(struct kreq *req);
 static void khealthcheck(struct kreq *req);
 static void get_auth_headers(char **un, char **pw, struct khead *k, int reqsz);
 static char *get_json_message(char *key, char *value);
+static void put_json_message(char *key, char *value, struct kreq *req, enum khttp http);
 
 typedef	void (*disp) (struct kreq *);
 
@@ -91,10 +92,7 @@ int main(void)
 			respcode(&req, KHTTP_405);
 		}
 		else if (PAGE__MAX == req.page) {
-			respcode(&req, KHTTP_404);
-			char *json_message = get_json_message("message", "Invalid page");
-			khttp_puts(&req, json_message);
-			free(json_message);
+			put_json_message("message", "Invalid page", &req, KHTTP_404);
 		}
 		else {
 			(*disps[req.page])(&req);
@@ -131,7 +129,6 @@ static void kindex(struct kreq *req)
 
 static void kusers(struct kreq *req)
 {
-	char *json_message = NULL;
 	if (KMETHOD_POST == req->method && strcmp(req->fullpath, "/users/create") == 0 && req->fieldsz)
 	{
 		const cJSON *username = NULL;
@@ -140,10 +137,7 @@ static void kusers(struct kreq *req)
 
 		if (userpass_json == NULL)
 		{
-			respcode(req, KHTTP_400);
-			json_message = get_json_message("message", "Bad request");
-			khttp_puts(req, json_message);
-			free(json_message);
+			put_json_message("message", "Bad request", req, KHTTP_400);
 			cJSON_Delete(userpass_json);
 			return;
 		}
@@ -160,32 +154,27 @@ static void kusers(struct kreq *req)
 
 			switch (login_code) {
 			case NO_USER_EXISTS:
-				if (!REGISTRATIONS_ALLOWED)
-				{
-					respcode(req, KHTTP_402);
-					json_message = get_json_message("message", "Registrations disabled");
+				if (!REGISTRATIONS_ALLOWED) {
+					put_json_message("message", "Registrations disabled", req, KHTTP_402);
 				}
-				else if (create_user(un, pw) == 0)
-				{
-					respcode(req, KHTTP_201);
-					json_message = get_json_message("username", un);
+				else if (create_user(un, pw) == 0) {
+					put_json_message("username", un, req, KHTTP_201);
 				}
-				else
-				{
-					respcode(req, KHTTP_500);
-					json_message = get_json_message("message", "Error registering account");
+				else {
+					put_json_message("message", "Error registering account", req, KHTTP_500);
 				}
 				break;
 			case LOGIN_SUCCESSFUL:
 			case LOGIN_FAILURE:
-				respcode(req, KHTTP_402);
-				json_message = get_json_message("message", "Username is already registered");
+				put_json_message("message", "Username is already registered", req, KHTTP_402);
 				break;
 			default:
-				respcode(req, KHTTP_400);
-				json_message = get_json_message("message", "Bad request");
+				put_json_message("message", "Bad request", req, KHTTP_400);
 				break;
 			}
+		}
+		else {
+			put_json_message("message", "Bad request", req, KHTTP_400);
 		}
 		cJSON_Delete(userpass_json);
 	}
@@ -199,27 +188,20 @@ static void kusers(struct kreq *req)
 
 		switch (login_code) {
 		case LOGIN_SUCCESSFUL:
-			respcode(req, KHTTP_200);
-			json_message = get_json_message("authorized", "OK");
+			put_json_message("authorized", "OK", req, KHTTP_200);
 			break;
 		case NO_USER_EXISTS:
 		case LOGIN_FAILURE:
-			respcode(req, KHTTP_401);
-			json_message = get_json_message("message", "Unauthorized");
+			put_json_message("message", "Unauthorized", req, KHTTP_401);
 			break;
 		default:
-			respcode(req, KHTTP_400);
-			json_message = get_json_message("message", "Bad request");
+			put_json_message("message", "Bad request", req, KHTTP_400);
 			break;
 		}
 	}
-	else
-	{
-		respcode(req, KHTTP_400);
-		json_message = get_json_message("message", "Bad request");
+	else {
+		put_json_message("message", "Bad request", req, KHTTP_400);
 	}
-	khttp_puts(req, json_message);
-	free(json_message);
 }
 
 static void ksyncs(struct kreq *req)
@@ -236,17 +218,15 @@ static void ksyncs(struct kreq *req)
 		break;
 	case NO_USER_EXISTS:
 	case LOGIN_FAILURE:
-		respcode(req, KHTTP_401);
-		json_message = get_json_message("message", "Unauthorized");
+		put_json_message("message", "Unauthorized", req, KHTTP_401);
 		break;
 	default:
-		respcode(req, KHTTP_400);
-		json_message = get_json_message("message", "Bad request");
+		put_json_message("message", "Bad request", req, KHTTP_400);
 		break;
 	}
 
 	if (login_code != LOGIN_SUCCESSFUL) {
-		goto login_end;
+		return;
 	}
 
 	if (KMETHOD_PUT == req->method && strcmp(req->fullpath, "/syncs/progress") == 0 && req->fieldsz)
@@ -258,10 +238,9 @@ static void ksyncs(struct kreq *req)
 
 		if (document_json == NULL)
 		{
-			respcode(req, KHTTP_400);
-			json_message = get_json_message("message", "Bad request");
 			cJSON_Delete(document_json);
-			goto login_end;
+			put_json_message("message", "Bad request", req, KHTTP_400);
+			return;
 		}
 
 		for (int pnum = 0; pnum < DK_MAX; pnum++)
@@ -271,10 +250,9 @@ static void ksyncs(struct kreq *req)
 			if ((pnum == PERCENTAGE_E && !cJSON_IsNumber(p[pnum]))
 			 || (pnum != PERCENTAGE_E && (!cJSON_IsString(p[pnum]) || p[pnum]->valuestring == NULL)))
 			{
-				respcode(req, KHTTP_400);
-				json_message = get_json_message("message", "Bad request");
 				cJSON_Delete(document_json);
-				goto login_end;
+				put_json_message("message", "Bad request", req, KHTTP_400);
+				return;
 			}
 
 			switch (pnum) {
@@ -305,18 +283,16 @@ static void ksyncs(struct kreq *req)
 			{
 				respcode(req, KHTTP_200);
 				json_message = cJSON_PrintUnformatted(update_out);
+				khttp_puts(req, json_message);
+				free(json_message);
 			}
-			else
-			{
-				respcode(req, KHTTP_500);
-				json_message = get_json_message("message", "Error adding document to the DB");
+			else {
+				put_json_message("message", "Error adding document to the DB", req, KHTTP_500);
 			}
 			cJSON_Delete(update_out);
 		}
-		else
-		{
-			respcode(req, KHTTP_500);
-			json_message = get_json_message("message", "Error adding document to the DB");
+		else {
+			put_json_message("message", "Error adding document to the DB", req, KHTTP_500);
 		}
 
 		cJSON_Delete(document_json);
@@ -328,24 +304,18 @@ static void ksyncs(struct kreq *req)
 
 		if (*docname != '\0')
 		{
+			char *message = get_document(un, docname);
 			respcode(req, KHTTP_200);
-			json_message = get_document(un, docname);
+			khttp_puts(req, message);
+			free(message);
 		}
-		else
-		{
-			respcode(req, KHTTP_400);
-			json_message = get_json_message("message", "Bad request");
+		else {
+			put_json_message("message", "Bad request", req, KHTTP_400);
 		}
 	}
-	else
-	{
-		respcode(req, KHTTP_400);
-		json_message = get_json_message("message", "Bad request");
+	else {
+		put_json_message("message", "Bad request", req, KHTTP_400);
 	}
-
-	login_end:
-		khttp_puts(req, json_message);
-		free(json_message);
 }
 
 static void khealthcheck(struct kreq *req)
@@ -387,4 +357,12 @@ static char *get_json_message(char *key, char *value)
 
 	cJSON_Delete(jresponse);
 	return rstring;
+}
+
+static void put_json_message(char *key, char *value, struct kreq *req, enum khttp http)
+{
+	respcode(req, http);
+	char *json_message = get_json_message(key, value);
+	khttp_puts(req, json_message);
+	free(json_message);
 }
