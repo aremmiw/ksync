@@ -1,5 +1,4 @@
-CC=gcc
-CFLAGS=-Wall -Wpedantic -O3
+CFLAGS=-Wall -Wextra -Wpedantic -O3
 LDLIBS=-lcjson -lkcgi -lsqlite3
 
 objs=ksync.o db.o
