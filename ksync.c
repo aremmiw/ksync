@@ -131,6 +131,12 @@ static void kusers(struct kreq *req)
 {
 	if (KMETHOD_POST == req->method && strcmp(req->fullpath, "/users/create") == 0 && req->fieldsz)
 	{
+		if (!REGISTRATIONS_ALLOWED)
+		{
+			put_json_message("message", "Registrations disabled", req, KHTTP_402);
+			return;
+		}
+
 		const cJSON *username = NULL;
 		const cJSON *password = NULL;
 		cJSON *userpass_json = cJSON_Parse(req->fields[0].val);
@@ -154,10 +160,7 @@ static void kusers(struct kreq *req)
 
 			switch (login_code) {
 			case NO_USER_EXISTS:
-				if (!REGISTRATIONS_ALLOWED) {
-					put_json_message("message", "Registrations disabled", req, KHTTP_402);
-				}
-				else if (create_user(un, pw) == 0) {
+				if (create_user(un, pw) == 0) {
 					put_json_message("username", un, req, KHTTP_201);
 				}
 				else {
