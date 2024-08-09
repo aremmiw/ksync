@@ -110,10 +110,10 @@ int main(void)
 
 static void respcode(struct kreq *req, enum khttp http)
 {
-	enum kmime mime;
+	enum kmime mime = KMIME_APP_JSON;
 
-	if (KMIME__MAX == (mime = req->mime)) {
-		mime = KMIME_APP_JSON;
+	if (req->page == PAGE_INDEX) {
+		mime = KMIME_TEXT_HTML;
 	}
 
 	khttp_head(req, kresps[KRESP_STATUS], "%s", khttps[http]);
