@@ -1,5 +1,5 @@
-CFLAGS=-Wall -Wextra -Wpedantic -O3
-LDLIBS=-lcjson -lkcgi -lsqlite3
+CFLAGS=-Wall -Wextra -Wpedantic -O3 -I/usr/local/include
+LDLIBS=-lcjson -lkcgi -lsqlite3 -L/usr/local/lib
 
 objs=ksync.o db.o
 
@@ -11,4 +11,4 @@ ksync: $(objs)
 
 .PHONY: clean
 clean:
-	rm ksync *.o
+	rm -f ksync *.o
