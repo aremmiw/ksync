@@ -31,3 +31,14 @@ fastcgi.server = (
 ```
 
 For nginx you will need to use a program like [spawn-fcgi](https://github.com/lighttpd/spawn-fcgi) and adjust `fastcgi_pass` accordingly.
+
+Example nginx config
+```
+location ^~ /ksync {
+    include fastcgi_params;
+    fastcgi_split_path_info ^(/ksync)(/.+)$;
+    fastcgi_param PATH_INFO $fastcgi_path_info;
+    fastcgi_pass unix:/var/run/ksync.sock;
+}
+
+```
