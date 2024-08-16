@@ -30,7 +30,7 @@ fastcgi.server = (
 )
 ```
 
-For nginx you will need to use a program like [spawn-fcgi](https://github.com/lighttpd/spawn-fcgi) and adjust `fastcgi_pass` accordingly.
+For nginx or OpenBSD httpd you will need to use a program like [spawn-fcgi](https://github.com/lighttpd/spawn-fcgi) or [kfcgi](https://kristaps.bsd.lv/kcgi/kfcgi.8.html)
 
 Example nginx config
 ```
@@ -40,5 +40,4 @@ location ^~ /ksync {
     fastcgi_param PATH_INFO $fastcgi_path_info;
     fastcgi_pass unix:/var/run/ksync.sock;
 }
-
 ```
