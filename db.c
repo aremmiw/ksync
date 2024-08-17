@@ -1,15 +1,15 @@
 #define _XOPEN_SOURCE 700
 #define _POSIX_C_SOURCE 200809L
 
+#include "config.h"
+#include "db.h"
+
 #include <string.h>
 #include <strings.h>
 #include <sys/stat.h>
 
 #include <cjson/cJSON.h>
 #include <sqlite3.h>
-
-#include "db.h"
-#include "config.h"
 
 sqlite3 *db;
 sqlite3_stmt *stmts[STMT_TOTAL] = {NULL};
