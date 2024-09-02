@@ -9,21 +9,26 @@ It's an alternative to [koreader-sync-server](https://github.com/koreader/koread
 * [SQLite](https://www.sqlite.org/)
 * [cJSON](https://github.com/DaveGamble/cJSON)
 
+You may need to run `ldconfig` as root before starting `ksync`.
+
 ## building
 Change `DB_PATH` in `config.h` to where you want the SQLite database file to be.  
-The user running `ksync` should have permissions to that path.
 
 Run `make` which will output a FastCGI executable `ksync`.
 
 ## usage
-lighttpd and Apache will be able to use `ksync` directly.
+Make sure that the user running `ksync` has permissions to `DB_PATH`, and that the directory exists.
+
+lighttpd and Apache can create a Unix socket for `ksync` without needing any additional programs.  
+The webserver user will need permissions to the socket directory.
 
 Example lighttpd config
 ```
+# The fastcgi module must be enabled, check your lighttpd config
 fastcgi.server = (
   "/ksync" => ((
     "bin-path" => "/path/to/ksync",
-    "socket" => "/var/run/ksync.sock",
+    "socket" => "/var/run/lighttpd/ksync.sock",
     "check-local" => "disable",
     "max-procs" => 2,
   ))
