@@ -9,11 +9,14 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/types.h>
+#include <syslog.h>
 #include <time.h>
 
 #include <cjson/cJSON.h>
 #include <kcgi.h>
 #include <sqlite3.h>
+
+#define PROGRAM_NAME "ksync"
 
 static void respcode(struct kreq *req, enum khttp http);
 static void kindex(struct kreq *req);
@@ -78,11 +81,17 @@ int main(void)
 	struct kreq req;
 	struct kfcgi *fcgi;
 
-	if (khttp_fcgi_init(&fcgi, emptykey, 1, pages, PAGE__MAX, PAGE_INDEX) != KCGI_OK) {
+	openlog(PROGRAM_NAME, LOG_CONS | LOG_PID, LOG_USER);
+
+	if (khttp_fcgi_init(&fcgi, emptykey, 1, pages, PAGE__MAX, PAGE_INDEX) != KCGI_OK)
+	{
+		syslog(LOG_ERR, "failed to init fastcgi");
 		return 1;
 	}
 
-	if (init_sqlitedb(DB_PATH) != 0) {
+	if (init_sqlitedb(DB_PATH) != 0)
+	{
+		syslog(LOG_ERR, "failed to open sqlite db");
 		return 1;
 	}
 
