@@ -35,7 +35,7 @@ enum login_types
 extern sqlite3 *db;
 extern sqlite3_stmt *stmts[STMT_TOTAL];
 
-int init_sqlitedb(char *dbpath, char **errmsg);
+int init_sqlitedb(char *dbpath);
 int create_user(char *username, char *password);
 int check_user(char *username, char *password);
 int update_document(char *username, Doc d);

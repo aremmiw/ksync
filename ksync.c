@@ -81,8 +81,6 @@ int main(void)
 	struct kreq req;
 	struct kfcgi *fcgi;
 
-	char *sqlerr = NULL;
-
 	openlog(PROGRAM_NAME, LOG_CONS | LOG_PID, LOG_USER);
 
 	if (khttp_fcgi_init(&fcgi, emptykey, 1, pages, PAGE__MAX, PAGE_INDEX) != KCGI_OK)
@@ -91,10 +89,9 @@ int main(void)
 		return 1;
 	}
 
-	if (init_sqlitedb(DB_PATH, &sqlerr) != 0)
+	if (init_sqlitedb(DB_PATH) != 0)
 	{
-		syslog(LOG_ERR, "failed to open sqlite db: %s", sqlerr);
-		sqlite3_free(sqlerr);
+		sqlite3_close(db);
 		return 1;
 	}
 

@@ -15,24 +15,33 @@
 sqlite3 *db;
 sqlite3_stmt *stmts[STMT_TOTAL] = {NULL};
 
-int init_sqlitedb(char *dbpath, char **errmsg)
+int init_sqlitedb(char *dbpath)
 {
+	char *errmsg = NULL;
 	if (sqlite3_open(dbpath, &db) != SQLITE_OK)
 	{
-		*errmsg = (char*) sqlite3_errmsg(db);
-		sqlite3_close(db);
+		errmsg = (char *) sqlite3_errmsg(db);
+		syslog(LOG_ERR, "failed to open sqlite db: %s", errmsg);
 		return 1;
 	}
 
 	const char *const init_db = "CREATE TABLE IF NOT EXISTS users(username TEXT COLLATE NOCASE, password TEXT, UNIQUE(username)); "
 				    "CREATE TABLE IF NOT EXISTS progress(username TEXT COLLATE NOCASE, document TEXT, progress TEXT, "
 				    "percentage REAL, device TEXT, device_id TEXT, timestamp DATETIME, UNIQUE(username, document));";
-	if (sqlite3_exec(db, init_db, 0, 0, errmsg) != SQLITE_OK)
+	if (sqlite3_exec(db, init_db, 0, 0, &errmsg) != SQLITE_OK)
 	{
-		sqlite3_close(db);
+		syslog(LOG_ERR, "failed to open sqlite db: %s", errmsg);
+		sqlite3_free(errmsg);
 		return 1;
 	}
+
 	chmod(dbpath, DB_PERMS);
+
+	if (sqlite3_db_readonly(db, "main") == 1)
+	{
+		syslog(LOG_ERR, "sqlite db doesn't have write permissions");
+		return 1;
+	}
 
 	return 0;
 }
