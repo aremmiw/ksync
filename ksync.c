@@ -81,6 +81,8 @@ int main(void)
 	struct kreq req;
 	struct kfcgi *fcgi;
 
+	char *sqlerr = NULL;
+
 	openlog(PROGRAM_NAME, LOG_CONS | LOG_PID, LOG_USER);
 
 	if (khttp_fcgi_init(&fcgi, emptykey, 1, pages, PAGE__MAX, PAGE_INDEX) != KCGI_OK)
@@ -89,9 +91,10 @@ int main(void)
 		return 1;
 	}
 
-	if (init_sqlitedb(DB_PATH) != 0)
+	if (init_sqlitedb(DB_PATH, &sqlerr) != 0)
 	{
-		syslog(LOG_ERR, "failed to open sqlite db");
+		syslog(LOG_ERR, "failed to open sqlite db: %s", sqlerr);
+		sqlite3_free(sqlerr);
 		return 1;
 	}
 
@@ -181,6 +184,9 @@ static void kusers(struct kreq *req)
 			case LOGIN_FAILURE:
 				put_json_message("message", "Username is already registered", req, KHTTP_402);
 				break;
+			case LOGIN_ERROR:
+				put_json_message("message", "Internal server error", req, KHTTP_500);
+				break;
 			default:
 				put_json_message("message", "Bad request", req, KHTTP_400);
 				break;
@@ -207,6 +213,9 @@ static void kusers(struct kreq *req)
 		case LOGIN_FAILURE:
 			put_json_message("message", "Unauthorized", req, KHTTP_401);
 			break;
+		case LOGIN_ERROR:
+			put_json_message("message", "Internal server error", req, KHTTP_500);
+			break;
 		default:
 			put_json_message("message", "Bad request", req, KHTTP_400);
 			break;
@@ -231,6 +240,9 @@ static void ksyncs(struct kreq *req)
 	case NO_USER_EXISTS:
 	case LOGIN_FAILURE:
 		put_json_message("message", "Unauthorized", req, KHTTP_401);
+		break;
+	case LOGIN_ERROR:
+		put_json_message("message", "Internal server error", req, KHTTP_500);
 		break;
 	default:
 		put_json_message("message", "Bad request", req, KHTTP_400);

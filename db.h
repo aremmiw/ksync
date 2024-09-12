@@ -27,6 +27,7 @@ enum login_types
 	LOGIN_SUCCESSFUL,
 	LOGIN_FAILURE,
 	LOGIN_ERROR,
+	INVALID_LOGIN,
 	NO_USER_EXISTS,
 	USERPASS_TOO_LONG,
 };
@@ -34,7 +35,7 @@ enum login_types
 extern sqlite3 *db;
 extern sqlite3_stmt *stmts[STMT_TOTAL];
 
-int init_sqlitedb(char *dbpath);
+int init_sqlitedb(char *dbpath, char **errmsg);
 int create_user(char *username, char *password);
 int check_user(char *username, char *password);
 int update_document(char *username, Doc d);
