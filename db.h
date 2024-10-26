@@ -1,6 +1,7 @@
 #ifndef DB_H
 #define DB_H
 
+#include <stdint.h>
 #include <sqlite3.h>
 
 typedef struct Doc
@@ -10,7 +11,7 @@ typedef struct Doc
 	double percentage;
 	char *device;
 	char *device_id;
-	long timestamp;
+	int64_t timestamp;
 } Doc;
 
 enum sql_stmts
