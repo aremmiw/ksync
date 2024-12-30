@@ -2,7 +2,6 @@
 #define DB_H
 
 #include <stdint.h>
-#include <sqlite3.h>
 
 typedef struct Doc
 {
