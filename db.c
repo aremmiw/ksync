@@ -56,8 +56,9 @@ void close_sqlitedb(void)
 int create_user(char *username, char *password)
 {
 	int retcode;
-	if (strlen(username) <= 0 || strlen(password) <= 0
-	 || strlen(username) > MAX_USERPASS_LEN || strlen(password) > MAX_USERPASS_LEN) {
+	if (username == NULL || password == NULL
+	 || *username == '\0' || *password == '\0'
+	 || strnlen(username, MAX_USERPASS_LEN+1) > MAX_USERPASS_LEN || strnlen(password, MAX_USERPASS_LEN+1) > MAX_USERPASS_LEN) {
 		return -1;
 	}
 
@@ -90,10 +91,10 @@ int check_user(char *username, char *password)
 	char *spw = NULL;
 
 	if (username == NULL || password == NULL
-	 || strlen(username) <= 0 || strlen(password) <= 0) {
+	 || *username == '\0' || *password == '\0') {
 		return INVALID_LOGIN;
 	}
-	if (strlen(username) > MAX_USERPASS_LEN || strlen(password) > MAX_USERPASS_LEN) {
+	if (strnlen(username, MAX_USERPASS_LEN+1) > MAX_USERPASS_LEN || strnlen(password, MAX_USERPASS_LEN+1) > MAX_USERPASS_LEN) {
 		return USERPASS_TOO_LONG;
 	}
 
