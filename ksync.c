@@ -14,7 +14,6 @@
 
 #include <cjson/cJSON.h>
 #include <kcgi.h>
-#include <sqlite3.h>
 
 #define PROGRAM_NAME "ksync"
 
@@ -91,7 +90,7 @@ int main(void)
 
 	if (init_sqlitedb(DB_PATH) != 0)
 	{
-		sqlite3_close(db);
+		close_sqlitedb();
 		return 1;
 	}
 
@@ -111,9 +110,7 @@ int main(void)
 	}
 
 	khttp_fcgi_free(fcgi);
-
-	for (int snum = 0; snum < STMT_TOTAL; sqlite3_finalize(stmts[snum++]));
-	sqlite3_close(db);
+	close_sqlitedb();
 
 	return 0;
 }
@@ -198,8 +195,8 @@ static void kusers(struct kreq *req)
 	{
 		char *un = NULL;
 		char *pw = NULL;
-		get_auth_headers(&un, &pw, req->reqs, req->reqsz);
 
+		get_auth_headers(&un, &pw, req->reqs, req->reqsz);
 		int login_code = check_user(un, pw);
 
 		switch (login_code) {
@@ -382,8 +379,8 @@ static char *get_json_message(char *key, char *value)
 
 static void put_json_message(char *key, char *value, struct kreq *req, enum khttp http)
 {
-	respcode(req, http);
 	char *json_message = get_json_message(key, value);
+	respcode(req, http);
 	khttp_puts(req, json_message);
 	free(json_message);
 }

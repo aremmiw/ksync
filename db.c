@@ -22,17 +22,18 @@ int init_sqlitedb(char *dbpath)
 	{
 		errmsg = (char *) sqlite3_errmsg(db);
 		syslog(LOG_ERR, "failed to open sqlite db: %s", errmsg);
-		return 1;
+		return -1;
 	}
 
-	const char *const init_db = "CREATE TABLE IF NOT EXISTS users(username TEXT COLLATE NOCASE, password TEXT, UNIQUE(username)); "
-				    "CREATE TABLE IF NOT EXISTS progress(username TEXT COLLATE NOCASE, document TEXT, progress TEXT, "
-				    "percentage REAL, device TEXT, device_id TEXT, timestamp DATETIME, UNIQUE(username, document));";
+	const char *const init_db =
+		"CREATE TABLE IF NOT EXISTS users(username TEXT COLLATE NOCASE, password TEXT, UNIQUE(username)); "
+		"CREATE TABLE IF NOT EXISTS progress(username TEXT COLLATE NOCASE, document TEXT, progress TEXT, "
+		"percentage REAL, device TEXT, device_id TEXT, timestamp DATETIME, UNIQUE(username, document));";
 	if (sqlite3_exec(db, init_db, 0, 0, &errmsg) != SQLITE_OK)
 	{
 		syslog(LOG_ERR, "failed to open sqlite db: %s", errmsg);
 		sqlite3_free(errmsg);
-		return 1;
+		return -1;
 	}
 
 	chmod(dbpath, DB_PERMS);
@@ -40,10 +41,16 @@ int init_sqlitedb(char *dbpath)
 	if (sqlite3_db_readonly(db, "main") == 1)
 	{
 		syslog(LOG_ERR, "sqlite db doesn't have write permissions");
-		return 1;
+		return -1;
 	}
 
 	return 0;
+}
+
+void close_sqlitedb(void)
+{
+	for (int snum = 0; snum < STMT_TOTAL; sqlite3_finalize(stmts[snum++]));
+	sqlite3_close(db);
 }
 
 int create_user(char *username, char *password)
@@ -51,7 +58,7 @@ int create_user(char *username, char *password)
 	int retcode;
 	if (strlen(username) <= 0 || strlen(password) <= 0
 	 || strlen(username) > MAX_USERPASS_LEN || strlen(password) > MAX_USERPASS_LEN) {
-		return 1;
+		return -1;
 	}
 
 	if (stmts[INSERTUSER_STMT] == NULL) {
@@ -67,10 +74,10 @@ int create_user(char *username, char *password)
 		break;
 	case SQLITE_ERROR:
 		syslog(LOG_ERR, "create_user() sqlite error: %s", sqlite3_errmsg(db));
-		retcode = 1;
+		retcode = -1;
 		break;
 	default:
-		retcode = 1;
+		retcode = -1;
 		break;
 	}
 	sqlite3_reset(stmts[INSERTUSER_STMT]);
@@ -124,11 +131,12 @@ int check_user(char *username, char *password)
 int update_document(char *username, Doc d)
 {
 	int retcode;
-	const char *const zsql = "INSERT INTO progress (username, document, progress, percentage, device, device_id, timestamp) "
-				 "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7) "
-				 "ON CONFLICT (username, document) "
-				 "DO UPDATE SET progress=excluded.progress, percentage=excluded.percentage, "
-				 "device=excluded.device, device_id=excluded.device_id, timestamp=excluded.timestamp;";
+	const char *const zsql =
+		"INSERT INTO progress (username, document, progress, percentage, device, device_id, timestamp) "
+		"VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7) "
+		"ON CONFLICT (username, document) "
+		"DO UPDATE SET progress=excluded.progress, percentage=excluded.percentage, "
+		"device=excluded.device, device_id=excluded.device_id, timestamp=excluded.timestamp;";
 
 	if (stmts[UPDATEDOC_STMT] == NULL) {
 		sqlite3_prepare_v2(db, zsql, -1, &stmts[UPDATEDOC_STMT], 0);
@@ -148,10 +156,10 @@ int update_document(char *username, Doc d)
 		break;
 	case SQLITE_ERROR:
 		syslog(LOG_ERR, "update_doc() sqlite error: %s", sqlite3_errmsg(db));
-		retcode = 1;
+		retcode = -1;
 		break;
 	default:
-		retcode = 1;
+		retcode = -1;
 		break;
 	}
 	sqlite3_reset(stmts[UPDATEDOC_STMT]);
@@ -160,11 +168,12 @@ int update_document(char *username, Doc d)
 
 char *get_document(char *username, char *docname)
 {
-	const char *const zsql = "SELECT document, progress, percentage, device, device_id, timestamp FROM progress "
-				 "WHERE (username=?1 AND document=?2);";
 	char *rstring = NULL;
 	cJSON *jresponse = cJSON_CreateObject();
 	Doc d;
+	const char *const zsql =
+		"SELECT document, progress, percentage, device, device_id, timestamp FROM progress "
+		"WHERE (username=?1 AND document=?2);";
 
 	if (jresponse == NULL) {
 		return NULL;

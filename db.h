@@ -33,10 +33,8 @@ enum login_types
 	USERPASS_TOO_LONG,
 };
 
-extern sqlite3 *db;
-extern sqlite3_stmt *stmts[STMT_TOTAL];
-
 int init_sqlitedb(char *dbpath);
+void close_sqlitedb(void);
 int create_user(char *username, char *password);
 int check_user(char *username, char *password);
 int update_document(char *username, Doc d);
