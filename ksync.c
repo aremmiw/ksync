@@ -95,13 +95,14 @@ int main(void)
 		return 1;
 	}
 
-	while (khttp_fcgi_parse(fcgi, &req) == KCGI_OK) {
-		if (KMETHOD_GET != req.method
-		 && KMETHOD_POST != req.method
-		 && KMETHOD_PUT != req.method) {
+	while (khttp_fcgi_parse(fcgi, &req) == KCGI_OK)
+	{
+		if (req.method != KMETHOD_GET
+		 && req.method != KMETHOD_POST
+		 && req.method != KMETHOD_PUT) {
 			respcode(&req, KHTTP_405);
 		}
-		else if (PAGE__MAX == req.page) {
+		else if (req.page == PAGE__MAX) {
 			put_json_message("message", "Invalid page", &req, KHTTP_404);
 		}
 		else {
@@ -137,7 +138,7 @@ static void kindex(struct kreq *req)
 
 static void kusers(struct kreq *req)
 {
-	if (KMETHOD_POST == req->method && strcmp(req->fullpath, "/users/create") == 0 && req->fieldsz)
+	if (req->method == KMETHOD_POST && strcmp(req->fullpath, "/users/create") == 0 && req->fieldsz)
 	{
 		if (!REGISTRATIONS_ALLOWED)
 		{
@@ -192,7 +193,7 @@ static void kusers(struct kreq *req)
 		}
 		cJSON_Delete(userpass_json);
 	}
-	else if (KMETHOD_GET == req->method && strcmp("/users/auth", req->fullpath) == 0)
+	else if (req->method == KMETHOD_GET && strcmp("/users/auth", req->fullpath) == 0)
 	{
 		char *un = NULL;
 		char *pw = NULL;
@@ -248,7 +249,7 @@ static void ksyncs(struct kreq *req)
 		return;
 	}
 
-	if (KMETHOD_PUT == req->method && strcmp(req->fullpath, "/syncs/progress") == 0 && req->fieldsz)
+	if (req->method == KMETHOD_PUT && strcmp(req->fullpath, "/syncs/progress") == 0 && req->fieldsz)
 	{
 		cJSON *document_json = cJSON_Parse(req->fields[0].val);
 		const cJSON *p[DK_MAX];
@@ -316,7 +317,7 @@ static void ksyncs(struct kreq *req)
 
 		cJSON_Delete(document_json);
 	}
-	else if (KMETHOD_GET == req->method && strncmp(req->fullpath, "/syncs/progress/", 16) == 0)
+	else if (req->method == KMETHOD_GET && strncmp(req->fullpath, "/syncs/progress/", 16) == 0)
 	{
 		char *docname = strrchr(req->fullpath, '/');
 		docname++;

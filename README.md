@@ -39,7 +39,7 @@ For nginx or OpenBSD httpd you will need to use a program like [spawn-fcgi](http
 
 Example nginx config
 ```
-location ^~ /ksync {
+location ^~ /ksync/ {
     include fastcgi_params;
     fastcgi_split_path_info ^(/ksync)(/.+)$;
     fastcgi_param PATH_INFO $fastcgi_path_info;
